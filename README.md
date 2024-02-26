@@ -16,6 +16,116 @@ You can install the package via NuGet:
 dotnet add package BaseTagHelpers
 ```
 
+## Usage
+
+### RazorTagHelperBase without Child Content
+
+The `RazorTagHelperBase` class is a base class for creating Tag Helpers that render Razor content.
+
+```csharp
+public record MyTagHelperModel(string FirstName, string LastName);
+
+MyRazorTagHelper : RazorTagHelperBase
+{
+  [HtmlAttributeName("model")] public MyTagHelperModel? Model { get; set; }
+    
+  public MyRazorTagHelper(
+    IHtmlHelper htmlHelper
+  ) : base(htmlHelper)
+  {
+  }
+    
+  public override void Process(TagHelperContext context, TagHelperOutput output)
+  {
+    SetPartialName(
+      "MyRazorTagHelper.cshtml",
+      Model
+    );
+    await base.ProcessAsync(context, output);
+  }
+}
+```
+
+```html
+@model MyTagHelperModel
+<div>
+  <h1>Hello @Model.FirstName @Model.LastName</h1>
+</div>
+```
+
+### RazorTagHelperBase with Child Content
+
+```csharp
+public class MyTagHelperModel : IHasChildContent
+{
+  public string FirstName { get; set; }
+  public string LastName { get; set; }
+  public string? ChildContent { get; set; }
+}
+
+MyRazorTagHelper : RazorTagHelperBase
+{
+  [HtmlAttributeName("model")] public MyTagHelperModel? Model { get; set; }
+    
+  public MyRazorTagHelper(
+    IHtmlHelper htmlHelper
+  ) : base(htmlHelper)
+  {
+  }
+    
+  public override void Process(TagHelperContext context, TagHelperOutput output)
+  {
+    SetPartialName(
+      "MyRazorTagHelper.cshtml",
+      Model,
+      true // Set to true to allow child content
+    );
+    await base.ProcessAsync(context, output);
+  }
+}
+```
+
+```html
+@model MyTagHelperModel
+<div>
+  <h1>Hello @Model.FirstName @Model.LastName</h1>
+</div>
+<div>
+  @Html.Raw(@Model.ChildContent)
+</div>
+```
+
+### ChildContentRazorTagHelperBase
+
+The `ChildContentRazorTagHelperBase` class is a base class for creating Tag Helpers that render child content without having a model.
+
+```csharp
+MyChildContentTagHelper : ChildContentRazorTagHelperBase
+{
+  public MyChildContentTagHelper(
+    IHtmlHelper htmlHelper
+  ) : base(htmlHelper)
+  {
+  }
+    
+  public override void Process(TagHelperContext context, TagHelperOutput output)
+  {
+    SetPartialName(
+      "MyChildContentTagHelper.cshtml"
+    );
+    await base.ProcessAsync(context, output);
+  }
+}
+```
+
+```html
+@model string
+
+<div>
+  @Html.Raw(@Model)
+</div>
+```
+
 ## Want to contribute?
 
 This project is just getting off the ground and could use some help with cleaning things up and refactoring.
